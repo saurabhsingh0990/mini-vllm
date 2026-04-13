@@ -6,7 +6,7 @@
 
 Mini vLLM is a **production-inspired LLM inference engine** focused on understanding and implementing system-level optimizations for efficient text generation.
 
-Unlike typical LLM projects that rely on high-level APIs, this project builds **core inference logic from scratch**, giving full control over how tokens are generated and optimized.
+Unlike typical LLM projects that rely on high-level APIs, this project builds **core inference logic from scratch**, giving full control over how tokens are generated, optimized, and served.
 
 ---
 
@@ -25,7 +25,7 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
 
 ## 🧠 Key Features
 
-### ✅ Custom Decoding Engine (Implemented)
+### ✅ Custom Decoding Engine
 
 * Greedy Decoding
 * Top-K Sampling
@@ -35,52 +35,71 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
 
 ---
 
-### ⚡ KV Cache Optimization (Implemented)
+### ⚡ KV Cache Optimization
 
 * Uses `past_key_values` to avoid recomputation
 * Processes only the latest token after first step
-* Significantly reduces inference latency
-* Works across **all decoding strategies (Greedy / Top-K / Top-P)**
-
-### 🚀 Dynamic Batching (Implemented)
-
-- Groups multiple incoming requests within a short time window
-- Improves system throughput under concurrent load
-- Configurable:
-  - batch size
-  - batching window (`wait_time`)
-- Demonstrates trade-off between:
-  - latency (increases)
-  - throughput (improves)
-
-### ⚡ Quantized Inference (Implemented)
-
-- Supports dynamic INT8 quantization using PyTorch
-- Reduces model memory footprint and improves CPU inference speed
-- Includes **graceful fallback** for unsupported hardware (e.g., macOS ARM)
-
-⚠️ Note:
-- Quantization works on CPU backends like `fbgemm`
-- Not supported on GPU or some ARM-based systems
+* Reduces inference latency significantly
+* Works across all decoding strategies
 
 ---
 
-### ⏱️ Latency Measurement (Implemented)
+### 🚀 Dynamic Batching
 
-* End-to-end response time measured at API layer
-* Enables comparison of:
+* Groups incoming requests within a configurable time window
+* Improves throughput under concurrent load
+* Built using:
 
-  * KV Cache ON vs OFF
-  * Different decoding strategies
+  * request queue
+  * background worker thread
+
+👉 Demonstrates real-world trade-off:
+
+* Higher latency
+* Improved throughput
 
 ---
 
-### ⚡ Upcoming Features
+### ⚡ Quantized Inference
 
-* Dynamic Batching
-* Quantized Inference (INT8 / 4-bit)
-* Streaming API (token-by-token response)
-* SSD-based offloading (optional)
+* Supports dynamic INT8 quantization using PyTorch
+* Reduces memory footprint and improves CPU performance
+* Includes **graceful fallback** for unsupported platforms
+
+⚠️ Notes:
+
+* Works on CPU backends like `fbgemm` (e.g., Colab CPU)
+* Not supported on GPU or macOS ARM
+
+---
+
+### ⏱️ Latency Measurement
+
+* End-to-end response time tracked at API level
+* Enables comparison across:
+
+  * decoding strategies
+  * KV cache
+  * batching
+  * quantization
+
+---
+
+### 🎨 Interactive UI (Streamlit)
+
+* Modern frontend to experiment with:
+
+  * decoding strategies
+  * KV cache
+  * batching
+  * quantization
+* Displays:
+
+  * generated output
+  * latency metrics
+  * batch size
+
+👉 Makes the system **demo-ready and interactive**
 
 ---
 
@@ -89,14 +108,16 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
 ```
 User Requests
      ↓
+Streamlit UI (Optional)
+     ↓
 API Layer (FastAPI)
      ↓
-Batching Layer (Request Queue + Worker)
+Batching Layer (Queue + Worker)
      ↓
 Inference Engine
      ├── KV Cache Layer
-     ├── Decoding Strategy (Greedy / Top-K / Top-P)
-     └── Quantization Layer (Optional)
+     ├── Decoding Strategies
+     └── Quantization Layer
      ↓
 LLM Model (GPT-2)
      ↓
@@ -115,56 +136,26 @@ mini-vllm/
 │   │   └── model_loader.py
 │
 │   ├── inference/
-│   │   └── decoding.py       # Unified decoding + KV cache engine
+│   │   └── decoding.py
+│   │   └── batcher.py
 │
 │   ├── api/
-│   │   └── server.py         # FastAPI server
+│   │   └── server.py
 │
+├── app.py                 # Streamlit UI
 ├── run.py
+├── test_batch.py
 ├── requirements.txt
 ├── README.md
-├── report.md                # Project report (work in progress)
+├── report.md
 └── .gitignore
-```
-
----
-
-## ⚙️ Prerequisites
-
-### 🖥️ Hardware
-
-* Minimum: CPU
-* Recommended: GPU (for faster inference)
-
----
-
-### 🧰 Software
-
-* Python 3.9+
-* PyTorch
-* Transformers
-* FastAPI
-* Uvicorn
-
----
-
-## 🔧 Installation
-
-```bash
-git clone https://github.com/your-username/mini-vllm.git
-cd mini-vllm
-
-python3 -m venv venv
-source venv/bin/activate
-
-pip install -r requirements.txt
 ```
 
 ---
 
 ## ▶️ Usage
 
-### Run server:
+### 1. Start Backend
 
 ```bash
 python run.py
@@ -172,11 +163,18 @@ python run.py
 
 ---
 
-### Open API docs:
+### 2. Start UI
 
+```bash
+streamlit run app.py
 ```
-http://127.0.0.1:8000/docs
-```
+
+---
+
+### 3. Open
+
+* API Docs → http://127.0.0.1:8000/docs
+* UI → http://localhost:8501
 
 ---
 
@@ -187,15 +185,14 @@ curl -X POST http://127.0.0.1:8000/generate \
 -H "Content-Type: application/json" \
 -d '{
   "prompt": "the elephant was sitting on the",
-  "max_length": 50,
   "strategy": "top_p",
-  "use_cache": true
+  "batching": true
 }'
 ```
 
 ---
 
-## 📥 Example Response
+## 📊 Example Response
 
 ```json
 {
@@ -211,53 +208,33 @@ curl -X POST http://127.0.0.1:8000/generate \
 
 ---
 
-## 📊 Decoding Comparison (Current Results)
-
-| Method | Behavior                       |
-| ------ | ------------------------------ |
-| Greedy | Repetitive, degenerate loops ❌ |
-| Top-K  | Improved diversity ⚠️          |
-| Top-P  | Natural, coherent, dynamic ✅   |
-
----
-
 ## 🧠 Key Learnings
 
 * Greedy decoding leads to **mode collapse**
-* Sampling-based methods improve **diversity and coherence**
-* KV caching reduces **redundant computation** and improves latency
-* Token-by-token control is essential for:
-
-  * KV cache
-  * batching
-  * real-world inference systems
+* Sampling improves **diversity and realism**
+* KV caching reduces **redundant computation**
+* Dynamic batching improves **throughput with latency trade-offs**
+* Quantization improves efficiency but depends on **hardware support**
+* Production systems must handle **fallback scenarios**
 
 ---
 
 ## 📅 Roadmap
 
-- [x] Basic inference engine  
-- [x] Custom decoding module  
-- [x] KV cache optimization  
-- [x] Dynamic batching  
-- [x] Quantization (with fallback support)  
-- [ ] Benchmarking & evaluation  
-
----
-
-## 📚 References
-
-* Attention is All You Need — Vaswani et al. (2017)
-* vLLM: Efficient Memory Management for LLM Serving — Kwon et al. (2023)
+* [x] Decoding module
+* [x] KV cache
+* [x] Dynamic batching
+* [x] Quantization
+* [ ] Benchmarking & evaluation
 
 ---
 
 ## 💼 Project Motivation
 
-This project is part of **LLMs: A Hands-on Approach (IISc)** and aims to bridge the gap between:
+This project is part of **LLMs: A Hands-on Approach (IISc)** and bridges:
 
-* theoretical understanding of transformers
-* real-world system-level LLM deployment
+* theoretical understanding
+* real-world system-level implementation
 
 ---
 

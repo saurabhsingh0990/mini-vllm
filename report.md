@@ -322,9 +322,55 @@ Quantization is a critical optimization for production systems, enabling efficie
 
 * No performance benchmarking yet
 
+
+---
+## 🎨 11. Interactive UI
+
+### Motivation
+
+While backend optimizations improve system performance, visualizing their impact is essential for understanding trade-offs.
+
 ---
 
-## 🚀 11. Next Steps
+### Approach
+
+A **Streamlit-based UI** was developed to provide:
+
+* real-time interaction with the inference system
+* ability to toggle features dynamically
+* visualization of performance metrics
+
+---
+
+### Features
+
+* Select decoding strategy
+* Enable/disable:
+
+  * KV cache
+  * batching
+  * quantization
+* View:
+
+  * generated output
+  * latency metrics
+  * batch size
+
+---
+
+### Key Insight
+
+Interactive interfaces significantly enhance understanding of system-level optimizations by making performance differences observable.
+
+---
+
+### Conclusion
+
+The UI transforms the system from a backend engine into a **complete, user-facing application**, enabling experimentation and demonstration.
+
+---
+
+## 🚀 12. Next Steps
 
 * [x] Implement KV cache
 * [x] Add dynamic batching
@@ -333,7 +379,7 @@ Quantization is a critical optimization for production systems, enabling efficie
 
 ---
 
-## 📚 12. References
+## 📚 13. References
 
 * Attention is All You Need — Vaswani et al. (2017)
 * vLLM: Efficient Memory Management for LLM Serving — Kwon et al. (2023)
@@ -345,3 +391,26 @@ Quantization is a critical optimization for production systems, enabling efficie
 * Add performance graphs for decoding strategies
 * Include latency comparison
 * Expand with KV cache and batching modules
+
+
+---
+
+## 🧾 Final Conclusion
+
+This project successfully demonstrates the design and implementation of a **production-style LLM inference system**.
+
+By integrating:
+- decoding strategies  
+- KV cache optimization  
+- dynamic batching  
+- quantization  
+- interactive UI  
+
+the system captures key challenges and trade-offs in real-world LLM deployment.
+
+The project highlights the importance of:
+- efficiency vs latency trade-offs  
+- hardware-aware optimizations  
+- modular and scalable system design  
+
+and provides a strong foundation for further exploration in LLM infrastructure.
