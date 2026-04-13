@@ -42,6 +42,17 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
 * Significantly reduces inference latency
 * Works across **all decoding strategies (Greedy / Top-K / Top-P)**
 
+### 🚀 Dynamic Batching (Implemented)
+
+- Groups multiple incoming requests within a short time window
+- Improves system throughput under concurrent load
+- Configurable:
+  - batch size
+  - batching window (`wait_time`)
+- Demonstrates trade-off between:
+  - latency (increases)
+  - throughput (improves)
+
 ---
 
 ### ⏱️ Latency Measurement (Implemented)
@@ -69,6 +80,8 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
 User Requests
      ↓
 API Layer (FastAPI)
+     ↓
+Batching Layer (Request Queue + Worker)
      ↓
 Inference Engine
      ├── KV Cache Layer
@@ -175,9 +188,11 @@ curl -X POST http://127.0.0.1:8000/generate \
 
 ```json
 {
-  "response": "...generated text...",
+  "response": "...",
   "strategy": "top_p",
   "kv_cache_enabled": true,
+  "batching_enabled": true,
+  "batch_size": 4,
   "time_taken_seconds": 0.7421
 }
 ```
@@ -209,12 +224,12 @@ curl -X POST http://127.0.0.1:8000/generate \
 
 ## 📅 Roadmap
 
-* [x] Basic inference engine
-* [x] Custom decoding module
-* [x] KV cache optimization
-* [ ] Dynamic batching
-* [ ] Quantization
-* [ ] Benchmarking & evaluation
+- [x] Basic inference engine  
+- [x] Custom decoding module  
+- [x] KV cache optimization  
+- [x] Dynamic batching  
+- [ ] Quantization  
+- [ ] Benchmarking & evaluation  
 
 ---
 

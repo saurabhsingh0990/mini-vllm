@@ -159,17 +159,95 @@ We used the `past_key_values` mechanism provided by the transformer model to sto
 
 ### Key Insight
 KV caching reduces redundant computation and is a fundamental optimization used in modern LLM inference systems.
+
+---
+## 🚀 8. Dynamic Batching
+
+### Motivation
+
+Processing requests individually leads to poor resource utilization and low throughput. Modern LLM systems batch multiple requests together to maximize efficiency.
+
 ---
 
+### Approach
 
-## ⚡ 8. Limitations (Current Stage)
+A **request-level batching mechanism** was implemented using:
+
+* a shared request queue
+* a background worker thread
+* a configurable batching window (`wait_time`)
+
+---
+
+### Workflow
+
+1. Incoming requests are added to a queue
+2. When the first request arrives, a batching window starts
+3. All requests arriving within this window are grouped
+4. The batch is processed together
+
+---
+
+### Observations
+
+Example output:
+
+| Request | Batch Size |
+| ------- | ---------- |
+| 1       | 4          |
+| 2       | 4          |
+| 3       | 4          |
+| 4       | 4          |
+| 5       | 2          |
+| 6       | 2          |
+
+---
+
+### Key Insight
+
+* Requests arriving close in time are grouped into batches
+* Batch size depends on:
+
+  * arrival timing
+  * batching window
+  * maximum batch size
+
+---
+
+### Performance Trade-off
+
+| Mode          | Latency | Throughput |
+| ------------- | ------- | ---------- |
+| No batching   | Low     | Low        |
+| With batching | Higher  | Higher     |
+
+---
+
+### Limitations
+
+* Current implementation performs **request-level batching**
+* Each request is still processed sequentially inside batch
+* True model-level batching would require:
+
+  * token alignment
+  * shared forward pass
+
+---
+
+### Conclusion
+
+Dynamic batching improves throughput but introduces latency due to queuing. It is a critical component of real-world LLM inference systems.
+
+---
+
+## ⚡ 9. Limitations (Current Stage)
 
 * No batching (single request processing)
 * No performance benchmarking yet
 
 ---
 
-## 🚀 9. Next Steps
+## 🚀 10. Next Steps
 
 * [ ] Implement KV cache
 * [ ] Add dynamic batching
@@ -178,7 +256,7 @@ KV caching reduces redundant computation and is a fundamental optimization used 
 
 ---
 
-## 📚 10. References
+## 📚 11. References
 
 * Attention is All You Need — Vaswani et al. (2017)
 * vLLM: Efficient Memory Management for LLM Serving — Kwon et al. (2023)
