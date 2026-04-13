@@ -53,6 +53,16 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
   - latency (increases)
   - throughput (improves)
 
+### ⚡ Quantized Inference (Implemented)
+
+- Supports dynamic INT8 quantization using PyTorch
+- Reduces model memory footprint and improves CPU inference speed
+- Includes **graceful fallback** for unsupported hardware (e.g., macOS ARM)
+
+⚠️ Note:
+- Quantization works on CPU backends like `fbgemm`
+- Not supported on GPU or some ARM-based systems
+
 ---
 
 ### ⏱️ Latency Measurement (Implemented)
@@ -85,7 +95,8 @@ Batching Layer (Request Queue + Worker)
      ↓
 Inference Engine
      ├── KV Cache Layer
-     └── Decoding Strategy (Greedy / Top-K / Top-P)
+     ├── Decoding Strategy (Greedy / Top-K / Top-P)
+     └── Quantization Layer (Optional)
      ↓
 LLM Model (GPT-2)
      ↓
@@ -192,6 +203,7 @@ curl -X POST http://127.0.0.1:8000/generate \
   "strategy": "top_p",
   "kv_cache_enabled": true,
   "batching_enabled": true,
+  "quantized": false,
   "batch_size": 4,
   "time_taken_seconds": 0.7421
 }
@@ -228,7 +240,7 @@ curl -X POST http://127.0.0.1:8000/generate \
 - [x] Custom decoding module  
 - [x] KV cache optimization  
 - [x] Dynamic batching  
-- [ ] Quantization  
+- [x] Quantization (with fallback support)  
 - [ ] Benchmarking & evaluation  
 
 ---

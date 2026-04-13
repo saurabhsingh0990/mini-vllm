@@ -133,6 +133,8 @@ the elephant was sitting on the
 * Token-level control is essential for building efficient inference systems
 * Dynamic batching improves throughput but introduces latency trade-offs
 * Efficient batching requires careful balancing of batching window and request arrival patterns
+* Quantization improves inference efficiency but depends on hardware backend support
+* Production systems must implement fallback mechanisms for unsupported features
 
 ---
 ## ⚡ 7. KV Cache Optimization
@@ -241,23 +243,97 @@ Example output:
 Dynamic batching improves throughput but introduces latency due to queuing. It is a critical component of real-world LLM inference systems.
 
 ---
+## ⚡ 9. Quantization
 
-## ⚡ 9. Limitations (Current Stage)
+### Motivation
+
+Large language models require significant memory and computational resources. Quantization reduces numerical precision to improve inference efficiency.
+
+---
+
+### Approach
+
+Dynamic INT8 quantization was applied to linear layers using PyTorch:
+
+* Converts float32 weights → int8
+* Reduces memory usage
+* Improves CPU inference speed
+
+---
+
+### Implementation
+
+```python
+torch.quantization.quantize_dynamic(
+    model,
+    {torch.nn.Linear},
+    dtype=torch.qint8
+)
+```
+
+---
+
+### Platform Limitation
+
+Quantization is **not universally supported**:
+
+| Platform               | Support                    |
+| ---------------------- | -------------------------- |
+| CPU (x86, e.g., Colab) | ✅ Supported                |
+| GPU (CUDA)             | ❌ Not supported            |
+| macOS ARM (M1/M2)      | ⚠️ Limited / Not available |
+
+---
+
+### Solution: Graceful Fallback
+
+To handle unsupported environments:
+
+* System detects backend capability
+* If quantization is unavailable:
+
+  * falls back to standard model
+  * logs a warning
+
+---
+
+### Observations
+
+| Mode      | Speed    | Memory | Output Quality     |
+| --------- | -------- | ------ | ------------------ |
+| Normal    | Baseline | High   | Best               |
+| Quantized | Faster   | Lower  | Slight degradation |
+
+---
+
+### Key Insight
+
+Quantization improves efficiency but depends on hardware support. A robust system must include fallback mechanisms.
+
+---
+
+### Conclusion
+
+Quantization is a critical optimization for production systems, enabling efficient deployment on resource-constrained environments.
+
+---
+
+## ⚡ 10. Limitations (Current Stage)
 
 * No performance benchmarking yet
 
 ---
 
-## 🚀 10. Next Steps
+## 🚀 11. Next Steps
 
 * [x] Implement KV cache
 * [x] Add dynamic batching
-* [ ] Introduce quantization
+* [x] Introduce quantization
 * [ ] Perform latency and throughput analysis
 
 ---
 
-## 📚 11. References
+## 📚 12. References
 
 * Attention is All You Need — Vaswani et al. (2017)
 * vLLM: Efficient Memory Management for LLM Serving — Kwon et al. (2023)
