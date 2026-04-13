@@ -2,63 +2,44 @@
 
 ## 📌 Overview
 
-Mini vLLM is a **production-inspired LLM inference engine** designed to explore and implement system-level optimizations for serving Large Language Models efficiently.
+Mini vLLM is a **production-inspired LLM inference engine** focused on understanding and implementing system-level optimizations for efficient text generation.
 
-This project focuses on **low-latency, high-throughput inference** by integrating techniques such as:
-
-* ⚡ KV Cache Optimization
-* 🔁 Dynamic Batching
-* 📉 Quantized Inference
-* 💾 Memory-efficient KV management
-* 🚀 (Optional) SSD-based offloading
-
-The goal is to **bridge the gap between theoretical LLM concepts and real-world deployment systems**.
+Unlike typical LLM projects that rely on high-level APIs, this project builds **core inference logic from scratch**, giving full control over how tokens are generated.
 
 ---
 
 ## 🎯 Objectives
 
-* Build a **mini version of modern inference engines (like vLLM)**
-* Understand **transformer inference bottlenecks**
+* Build a **mini version of modern inference systems (like vLLM)**
+* Implement **custom decoding strategies**
 * Optimize:
 
   * Latency
   * Throughput
   * Memory usage
-* Benchmark different optimization strategies
+* Benchmark different inference techniques
 
 ---
 
 ## 🧠 Key Features
 
-### 1. KV Cache Optimization
+### ✅ Custom Decoding Engine (Implemented)
 
-Avoid recomputation of attention states to significantly reduce inference time.
-
-### 2. Dynamic Batching
-
-Efficiently batch multiple user requests to maximize GPU/CPU utilization.
-
-### 3. Multiple Decoding Strategies
-
-* Greedy
-* Beam Search
+* Greedy Decoding
 * Top-K Sampling
-* Top-P (Nucleus Sampling)
+* Top-P (Nucleus) Sampling
 
-### 4. Quantization Support
+👉 Fully replaces HuggingFace `.generate()` with manual token-by-token generation.
 
-* FP16 / INT8 / 4-bit inference
-* Compare performance vs accuracy trade-offs
+---
 
-### 5. Streaming Inference API
+### ⚡ Upcoming Features
 
-* Token-by-token output (similar to ChatGPT)
-* Built using FastAPI / WebSockets
-
-### 6. (Optional) SSD Offloading
-
-Simulate large-scale systems by offloading KV cache to disk.
+* KV Cache Optimization
+* Dynamic Batching
+* Quantized Inference (INT8 / 4-bit)
+* Streaming API (token-by-token response)
+* SSD-based offloading (optional)
 
 ---
 
@@ -69,15 +50,13 @@ User Requests
      ↓
 Request Queue
      ↓
-Dynamic Batching Engine
+Inference Engine
      ↓
-KV Cache Manager
+Custom Decoding Module
      ↓
-LLM Inference Engine
+LLM Model (GPT-2)
      ↓
-Quantized Model
-     ↓
-Streaming API (FastAPI)
+Generated Output
 ```
 
 ---
@@ -88,33 +67,19 @@ Streaming API (FastAPI)
 mini-vllm/
 │
 ├── src/
-│   ├── model/              # Model loading & wrappers
-│   ├── inference/          # Core inference logic
-│   │   ├── kv_cache.py
-│   │   ├── decoding.py
-│   │   ├── batching.py
-│   │
-│   ├── scheduler/          # Request scheduling logic
-│   ├── quantization/       # Quantization utilities
-│   ├── api/                # FastAPI server
+│   ├── model/
+│   │   └── model_loader.py
+│
+│   ├── inference/
+│   │   └── decoding.py   # Custom decoding logic
+│
+│   ├── api/
 │   │   └── server.py
-│   │
-│   └── utils/              # Helper functions
 │
-├── experiments/            # Benchmark scripts
-│   ├── latency_test.py
-│   ├── throughput_test.py
-│   └── memory_analysis.py
-│
-├── notebooks/              # Colab/Jupyter experiments
-│
-├── configs/                # Config files
-│
-├── tests/                  # Unit tests
-│
+├── run.py
 ├── requirements.txt
 ├── README.md
-└── run.py                  # Entry point
+└── .gitignore
 ```
 
 ---
@@ -123,14 +88,14 @@ mini-vllm/
 
 ### 🖥️ Hardware
 
-* Minimum: CPU (development)
-* Recommended: GPU (for benchmarking)
+* Minimum: CPU
+* Recommended: GPU (for faster inference)
 
 ### 🧰 Software
 
 * Python 3.9+
 * PyTorch
-* HuggingFace Transformers
+* Transformers
 * FastAPI
 * Uvicorn
 
@@ -142,6 +107,9 @@ mini-vllm/
 git clone https://github.com/your-username/mini-vllm.git
 cd mini-vllm
 
+python3 -m venv venv
+source venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
@@ -149,57 +117,60 @@ pip install -r requirements.txt
 
 ## ▶️ Usage
 
-### Run inference server:
+### Run server:
 
 ```bash
 python run.py
 ```
 
-### Example request:
+### Open API docs:
 
-```bash
-curl -X POST http://localhost:8000/generate \
--H "Content-Type: application/json" \
--d '{"prompt": "Explain transformers in simple terms"}'
+```
+http://127.0.0.1:8000/docs
 ```
 
 ---
 
-## 📊 Evaluation Plan
+## 🧪 Example Request
 
-We evaluate performance across:
+```bash
+curl -X POST http://127.0.0.1:8000/generate \
+-H "Content-Type: application/json" \
+-d '{"prompt": "the elephant was sitting on the", "max_length": 50}'
+```
 
-* ⏱ Latency (per token & full response)
-* 🚀 Throughput (requests/sec)
-* 💾 Memory usage
-* 📉 Impact of quantization
-* 🔬 Ablation:
+---
 
-  * KV Cache ON vs OFF
-  * Different batch sizes
-  * Decoding strategies
+## 📊 Decoding Comparison (Current Results)
+
+| Method | Behavior                       |
+| ------ | ------------------------------ |
+| Greedy | Repetitive, degenerate loops ❌ |
+| Top-K  | Improved diversity ⚠️          |
+| Top-P  | Natural, coherent, dynamic ✅   |
+
+---
+
+## 🧠 Key Learnings
+
+* Greedy decoding leads to **mode collapse**
+* Sampling-based methods improve **diversity**
+* Token-by-token control is essential for:
+
+  * KV cache
+  * batching
+  * real-world inference systems
 
 ---
 
 ## 📅 Roadmap
 
-* [ ] Basic GPT-2 inference
-* [ ] Implement decoding methods
-* [ ] Add KV cache
-* [ ] Build API server
+* [x] Basic inference engine
+* [x] Custom decoding module
+* [ ] KV cache optimization
 * [ ] Dynamic batching
 * [ ] Quantization
-* [ ] Benchmarking & analysis
-* [ ] SSD offloading (optional)
-
----
-
-## 🧪 Experiments
-
-* Latency vs Batch Size
-* Memory vs Quantization
-* Throughput vs Concurrency
-* Decoding Quality Comparison
+* [ ] Benchmarking & evaluation
 
 ---
 
@@ -210,12 +181,15 @@ We evaluate performance across:
 
 ---
 
-## 🤝 Contributing
+## 💼 Project Motivation
 
-Contributions, suggestions, and improvements are welcome!
+This project is part of **LLMs: A Hands-on Approach (IISc)** and aims to bridge the gap between:
+
+* theoretical understanding of transformers
+* real-world system-level LLM deployment
 
 ---
 
 ## 📜 License
 
-This project is for academic and research purposes.
+For academic and research purposes.
