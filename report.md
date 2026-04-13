@@ -131,6 +131,8 @@ the elephant was sitting on the
 * Sampling methods improve **diversity and realism**
 * Top-P sampling provides **adaptive and superior performance**
 * Token-level control is essential for building efficient inference systems
+* Dynamic batching improves throughput but introduces latency trade-offs
+* Efficient batching requires careful balancing of batching window and request arrival patterns
 
 ---
 ## ⚡ 7. KV Cache Optimization
@@ -242,15 +244,14 @@ Dynamic batching improves throughput but introduces latency due to queuing. It i
 
 ## ⚡ 9. Limitations (Current Stage)
 
-* No batching (single request processing)
 * No performance benchmarking yet
 
 ---
 
 ## 🚀 10. Next Steps
 
-* [ ] Implement KV cache
-* [ ] Add dynamic batching
+* [x] Implement KV cache
+* [x] Add dynamic batching
 * [ ] Introduce quantization
 * [ ] Perform latency and throughput analysis
 
