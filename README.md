@@ -1,10 +1,12 @@
 # 🚀 Mini vLLM: High-Performance LLM Inference Engine
 
+---
+
 ## 📌 Overview
 
 Mini vLLM is a **production-inspired LLM inference engine** focused on understanding and implementing system-level optimizations for efficient text generation.
 
-Unlike typical LLM projects that rely on high-level APIs, this project builds **core inference logic from scratch**, giving full control over how tokens are generated.
+Unlike typical LLM projects that rely on high-level APIs, this project builds **core inference logic from scratch**, giving full control over how tokens are generated and optimized.
 
 ---
 
@@ -33,9 +35,27 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
 
 ---
 
+### ⚡ KV Cache Optimization (Implemented)
+
+* Uses `past_key_values` to avoid recomputation
+* Processes only the latest token after first step
+* Significantly reduces inference latency
+* Works across **all decoding strategies (Greedy / Top-K / Top-P)**
+
+---
+
+### ⏱️ Latency Measurement (Implemented)
+
+* End-to-end response time measured at API layer
+* Enables comparison of:
+
+  * KV Cache ON vs OFF
+  * Different decoding strategies
+
+---
+
 ### ⚡ Upcoming Features
 
-* KV Cache Optimization
 * Dynamic Batching
 * Quantized Inference (INT8 / 4-bit)
 * Streaming API (token-by-token response)
@@ -48,11 +68,11 @@ Unlike typical LLM projects that rely on high-level APIs, this project builds **
 ```
 User Requests
      ↓
-Request Queue
+API Layer (FastAPI)
      ↓
 Inference Engine
-     ↓
-Custom Decoding Module
+     ├── KV Cache Layer
+     └── Decoding Strategy (Greedy / Top-K / Top-P)
      ↓
 LLM Model (GPT-2)
      ↓
@@ -71,14 +91,15 @@ mini-vllm/
 │   │   └── model_loader.py
 │
 │   ├── inference/
-│   │   └── decoding.py   # Custom decoding logic
+│   │   └── decoding.py       # Unified decoding + KV cache engine
 │
 │   ├── api/
-│   │   └── server.py
+│   │   └── server.py         # FastAPI server
 │
 ├── run.py
 ├── requirements.txt
 ├── README.md
+├── report.md                # Project report (work in progress)
 └── .gitignore
 ```
 
@@ -90,6 +111,8 @@ mini-vllm/
 
 * Minimum: CPU
 * Recommended: GPU (for faster inference)
+
+---
 
 ### 🧰 Software
 
@@ -123,6 +146,8 @@ pip install -r requirements.txt
 python run.py
 ```
 
+---
+
 ### Open API docs:
 
 ```
@@ -136,7 +161,25 @@ http://127.0.0.1:8000/docs
 ```bash
 curl -X POST http://127.0.0.1:8000/generate \
 -H "Content-Type: application/json" \
--d '{"prompt": "the elephant was sitting on the", "max_length": 50}'
+-d '{
+  "prompt": "the elephant was sitting on the",
+  "max_length": 50,
+  "strategy": "top_p",
+  "use_cache": true
+}'
+```
+
+---
+
+## 📥 Example Response
+
+```json
+{
+  "response": "...generated text...",
+  "strategy": "top_p",
+  "kv_cache_enabled": true,
+  "time_taken_seconds": 0.7421
+}
 ```
 
 ---
@@ -154,7 +197,8 @@ curl -X POST http://127.0.0.1:8000/generate \
 ## 🧠 Key Learnings
 
 * Greedy decoding leads to **mode collapse**
-* Sampling-based methods improve **diversity**
+* Sampling-based methods improve **diversity and coherence**
+* KV caching reduces **redundant computation** and improves latency
 * Token-by-token control is essential for:
 
   * KV cache
@@ -167,7 +211,7 @@ curl -X POST http://127.0.0.1:8000/generate \
 
 * [x] Basic inference engine
 * [x] Custom decoding module
-* [ ] KV cache optimization
+* [x] KV cache optimization
 * [ ] Dynamic batching
 * [ ] Quantization
 * [ ] Benchmarking & evaluation

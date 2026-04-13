@@ -133,16 +133,43 @@ the elephant was sitting on the
 * Token-level control is essential for building efficient inference systems
 
 ---
+## ⚡ 7. KV Cache Optimization
 
-## ⚡ 7. Limitations (Current Stage)
+### Motivation
+Without KV cache, the model recomputes attention for all tokens at every step, leading to high computational cost.
 
-* No KV cache (recomputation at each step)
+### Approach
+We used the `past_key_values` mechanism provided by the transformer model to store and reuse previously computed attention states.
+
+### Implementation
+- First step processes full input
+- Subsequent steps process only the latest token
+- Cached keys and values are reused
+
+### Observations
+- Output quality remains unchanged
+- Significant reduction in inference latency
+
+### Example Comparison
+
+| Mode | Latency |
+|------|--------|
+| KV Cache OFF | Higher |
+| KV Cache ON | Lower |
+
+### Key Insight
+KV caching reduces redundant computation and is a fundamental optimization used in modern LLM inference systems.
+---
+
+
+## ⚡ 8. Limitations (Current Stage)
+
 * No batching (single request processing)
 * No performance benchmarking yet
 
 ---
 
-## 🚀 8. Next Steps
+## 🚀 9. Next Steps
 
 * [ ] Implement KV cache
 * [ ] Add dynamic batching
@@ -151,7 +178,7 @@ the elephant was sitting on the
 
 ---
 
-## 📚 9. References
+## 📚 10. References
 
 * Attention is All You Need — Vaswani et al. (2017)
 * vLLM: Efficient Memory Management for LLM Serving — Kwon et al. (2023)
