@@ -1,23 +1,35 @@
-
 from fastapi import FastAPI
 from pydantic import BaseModel
-from src.inference.batcher import RequestBatcher
 import threading
 import time
+
 from src.model.model_loader import ModelLoader
+from src.inference.batcher import RequestBatcher
 
 
-# Initialize FastAPI app
+# ----------------------------
+# Initialize App
+# ----------------------------
 app = FastAPI()
 
-# Load model once at startup
-model = ModelLoader()
 
-# Initialize batcher
-batcher = RequestBatcher(model)
+# ----------------------------
+# Load Models
+# ----------------------------
+model = ModelLoader(quantized=False)
+quantized_model = ModelLoader(quantized=True)
 
-# Start background batching thread
-threading.Thread(target=batcher.process_batch, daemon=True).start()
+
+# ----------------------------
+# Create Batchers
+# ----------------------------
+normal_batcher = RequestBatcher(model)
+quantized_batcher = RequestBatcher(quantized_model)
+
+
+# Start batcher threads
+threading.Thread(target=normal_batcher.process_batch, daemon=True).start()
+threading.Thread(target=quantized_batcher.process_batch, daemon=True).start()
 
 
 # ----------------------------
@@ -28,7 +40,8 @@ class GenerateRequest(BaseModel):
     max_length: int = 50
     strategy: str = "top_p"
     use_cache: bool = True
-    batching: bool = True   # ✅ NEW
+    batching: bool = True
+    quantized: bool = False   # 🔥 NEW
 
 
 # ----------------------------
@@ -40,7 +53,7 @@ def root():
 
 
 # ----------------------------
-# Text Generation Endpoint
+# Generate Endpoint
 # ----------------------------
 @app.post("/generate")
 def generate_text(req: GenerateRequest):
@@ -53,7 +66,11 @@ def generate_text(req: GenerateRequest):
         "use_cache": req.use_cache
     }
 
-    # 🔥 Batching ON
+    # 🔥 Select model/batcher
+    batcher = quantized_batcher if req.quantized else normal_batcher
+    model_instance = quantized_model if req.quantized else model
+
+    # 🔹 Batching enabled
     if req.batching:
         event, result = batcher.add_request(request_data)
 
@@ -63,9 +80,9 @@ def generate_text(req: GenerateRequest):
         response = result.get("response", "Error: No response generated")
         batch_size = result.get("batch_size", 1)
 
-    # 🔥 Batching OFF (direct inference)
+    # 🔹 Batching disabled
     else:
-        response = model.generate(**request_data)
+        response = model_instance.generate(**request_data)
         batch_size = 1
 
     end_time = time.time()
@@ -75,6 +92,7 @@ def generate_text(req: GenerateRequest):
         "strategy": req.strategy,
         "kv_cache_enabled": req.use_cache,
         "batching_enabled": req.batching,
+        "quantized": model_instance.quantized,
         "batch_size": batch_size,
         "time_taken_seconds": round(end_time - start_time, 4)
     }

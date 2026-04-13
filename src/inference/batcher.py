@@ -1,11 +1,9 @@
-# src/inference/batcher.py
-
 import time
 import threading
 
 
 class RequestBatcher:
-    def __init__(self, model, batch_size=4, wait_time=0.05):
+    def __init__(self, model, batch_size=8, wait_time=0.2):
         self.model = model
         self.batch_size = batch_size
         self.wait_time = wait_time
@@ -24,12 +22,12 @@ class RequestBatcher:
 
     def process_batch(self):
         while True:
-            # Wait until at least one request is present
+            # Wait until at least one request arrives
             if not self.queue:
                 time.sleep(0.01)
                 continue
 
-            # First request arrived → start batching window
+            # Start batching window
             time.sleep(self.wait_time)
 
             with self.lock:
