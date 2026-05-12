@@ -225,7 +225,6 @@ curl -X POST http://127.0.0.1:8000/generate \
 * [x] KV cache
 * [x] Dynamic batching
 * [x] Quantization
-* [ ] Benchmarking & evaluation
 
 ---
 
